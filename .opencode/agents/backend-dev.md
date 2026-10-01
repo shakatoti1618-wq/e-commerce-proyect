@@ -9,6 +9,13 @@ permission:
   bash:
     "*": ask
     "git push*": deny
+    "pnpm install": allow
+    "pnpm install --frozen-lockfile": allow
+    "pnpm test*": allow
+    "pnpm lint*": allow
+    "pnpm build*": allow
+    "pnpm typecheck*": allow
+    "pnpm prisma generate*": allow
   skill:
     "*": deny
     "clean-code-nestjs": allow
