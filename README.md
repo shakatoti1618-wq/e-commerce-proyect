@@ -63,8 +63,8 @@ Además de ser una tienda funcional, el proyecto está diseñado como base **whi
 ### Instalación
 
 ```bash
-git clone https://github.com/shakatoti1618-wq/<nombre-del-repo>.git
-cd <nombre-del-repo>
+git clone https://github.com/shakatoti1618-wq/e-commerce-proyect.git
+cd e-commerce-proyect
 pnpm install
 ```
 
