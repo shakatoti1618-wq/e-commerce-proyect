@@ -4,7 +4,7 @@ Eres mi agente de desarrollo (OpenCode). Vamos a construir una tienda online pro
 
 ## Datos reales del negocio (no inventar nada adicional — usar TODO donde falte)
 
-- **Nombre de marca (provisional)**: Lumé — TODO: puede cambiar, este proyecto se construye como una muestra de trabajo que también podría venderse a un cliente real que necesite una tienda online, así que el naming/branding NO debe quedar hardcodeado en el código.
+- **Nombre de marca (provisional)**: Lumé — TODO: puede cambiar, por eso el naming/branding NO debe quedar hardcodeado en el código.
 - **Categoría de producto**: accesorios y maquillaje (producto físico, con variantes tipo color/tono)
 - **Estilo de marca**: elegante / lujo asequible
 - **Público objetivo**: todo género, sin distinción
@@ -14,15 +14,15 @@ Eres mi agente de desarrollo (OpenCode). Vamos a construir una tienda online pro
 
 ## Requisito de "marca blanca" (white-label)
 
-Como el proyecto puede terminar vendiéndose a otro dueño con otra marca, **todo lo relacionado con identidad de marca debe ser configuración, nunca código hardcodeado**: nombre de tienda, logo, paleta de colores, textos de "quiénes somos", datos de contacto y redes sociales van en variables de entorno o en una tabla `Settings` editable desde el panel admin — igual que hiciste en HighClean con los datos de la empresa vía seed/admin, pero llevándolo un paso más allá para que rebrandear la tienda sea cuestión de configuración, no de tocar código.
+La identidad de marca debe ser configuración, nunca código hardcodeado: nombre de tienda, logo, paleta de colores, textos de "quiénes somos", datos de contacto y redes sociales van en variables de entorno o en una tabla `Settings` editable desde el panel admin, para que rebrandear la tienda sea cuestión de configuración, no de tocar código.
 
 ## Documentación del proyecto (aprendizaje + historial de decisiones)
 
-Igual que en HighClean, este proyecto debe quedar completamente documentado de principio a fin, no solo funcionando:
+Este proyecto debe quedar completamente documentado de principio a fin, no solo funcionando:
 
 - Carpeta `docs/decisions/` en el repo con un **ADR (Architecture Decision Record)** por cada decisión técnica importante que tomemos juntos (ej: `ADR-001-eleccion-nestjs-vs-express.md`, `ADR-002-eleccion-wompi-vs-stripe.md`). Cada ADR incluye: contexto, opciones consideradas, decisión tomada, por qué, y consecuencias/trade-offs aceptados.
 - Al cerrar cada módulo, además del reporte de cierre (ver regla 9 más abajo), se agrega una entrada corta en `docs/decisions/BITACORA.md` con fecha, módulo cerrado y resumen de una línea — esto arma la línea de tiempo completa del proyecto para poder repasarla después.
-- Ningún ADR se reescribe para "quedar bien" en retrospectiva: si una decisión se cambia después, se agrega un ADR nuevo que referencia al anterior y explica por qué se cambió (igual que el historial de HighClean, donde se ve la evolución real, no una versión pulida).
+- Ningún ADR se reescribe para "quedar bien" en retrospectiva: si una decisión se cambia después, se agrega un ADR nuevo que referencia al anterior y explica por qué se cambió — el historial debe mostrar la evolución real del proyecto, no una versión pulida a posteriori.
 - `docs/definition-of-done.md` es el checklist oficial de cierre de módulo (seguridad, infraestructura, frontend/UX, producto). Se coloca en el repo en el M0 y se revisa contra él, punto por punto, antes de cerrar cualquier módulo que aplique.
 
 ## Reglas fijas de trabajo (no negociables)
@@ -52,8 +52,8 @@ Igual que en HighClean, este proyecto debe quedar completamente documentado de p
 
 ## Cuentas externas: cuáles crear ya y cuáles al final
 
-- **Wompi**: NO crear la cuenta de comercio todavía. Como el proyecto puede terminar vendiéndose a otro dueño (ver "marca blanca" arriba), la verificación de comercio real (NIT/cédula, cuenta bancaria, representante legal) debe quedar a nombre de quien finalmente opere el negocio, no de quien lo construyó. Se espera hasta tener un comprador/dueño real confirmado. Mientras tanto, todo el módulo M9 se desarrolla y prueba completo con las **llaves de sandbox/pruebas** de Wompi (disponibles de inmediato, sin verificación), así el checkout queda 100% funcional aunque la cuenta de producción no exista aún — solo se cambian las llaves cuando aparezca el dueño real.
-- **Vercel, Render, Neon, Upstash**: NO hay que crearlas ahora — queda registrado aquí explícitamente para no olvidarlo. Son planes gratuitos sin fecha de expiración por prueba (no son "trials" con cuenta regresiva), así que se crean recién en el **Módulo 15 (Deploy)**, igual que se hizo en HighClean. Crearlas antes solo añade cosas que vigilar sin necesidad.
+- **Wompi**: NO crear la cuenta de comercio todavía. La verificación de comercio real (NIT/cédula, cuenta bancaria, representante legal) debe quedar a nombre de quien opere el negocio, así que se crea al final. Mientras tanto, todo el módulo M9 se desarrolla y prueba completo con las **llaves de sandbox/pruebas** de Wompi (disponibles de inmediato, sin verificación), y solo se cambian las llaves al activar producción.
+- **Vercel, Render, Neon, Upstash**: NO hay que crearlas ahora — queda registrado aquí explícitamente para no olvidarlo. Son planes gratuitos sin fecha de expiración por prueba (no son "trials" con cuenta regresiva), así que se crean recién en el **Módulo 15 (Deploy)**. Crearlas antes solo añade cosas que vigilar sin necesidad.
 - **Dominio**: se compra cuando ya se vaya a desplegar, no antes.
 
 ## Módulos del proyecto (orden secuencial)
