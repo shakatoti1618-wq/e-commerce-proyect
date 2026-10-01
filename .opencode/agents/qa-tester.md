@@ -6,6 +6,11 @@ permission:
     "**": deny
     "**/*.test.ts": allow
     "**/*.spec.ts": allow
+    "**/*.test.tsx": allow
+    "**/*.spec.tsx": allow
+    "**/__tests__/**": allow
+    "**/vitest.config.*": allow
+    "**/playwright.config.*": allow
     "e2e/**": allow
   bash:
     "*": ask
