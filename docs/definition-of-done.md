@@ -46,7 +46,7 @@ Checklist de referencia para dar por cerrado un módulo. No todos los puntos apl
 - [ ] Formulario de contacto funcional, protegido contra spam (rate limit + honeypot/captcha)
 - [ ] Validación de formularios (UX en frontend, fuente de verdad en backend)
 - [ ] Mensajes de error y éxito claros
-- [ ] Dark mode — coherente con la dirección visual elegida del mockup
+- [ ] Tema único "Lujo con color" aplicado de forma consistente (sin toggle claro/oscuro) y contraste de texto AA verificado
 - [ ] Botones de redes sociales
 - [ ] Sección de testimonios: sin testimonios inventados; diseñada para funcionar vacía o con reseñas reales
 - [ ] Carrito persiste si el usuario recarga o cierra el navegador
@@ -59,6 +59,6 @@ Checklist de referencia para dar por cerrado un módulo. No todos los puntos apl
 
 - [ ] Notificaciones de compra al cliente: orden recibida, pago aprobado, pago rechazado/fallido (con siguiente paso), envío despachado
 - [ ] Notificaciones al vendedor/admin: nueva orden pagada, pago fallido de un intento de compra, alerta de webhook de pago no procesado
-- [ ] Panel admin (CRUD de productos, órdenes, clientes, reportes básicos — como en HighClean)
+- [ ] Panel admin (CRUD de productos, órdenes, clientes, reportes básicos de ventas)
 - [ ] Analytics y eventos de conversión configurados (vista de producto → agregar al carrito → inicio de checkout → compra completada)
 - [ ] No aplica por ahora: requisitos de publicación en Google Play / App Store (no hay app nativa en el MVP; si se construye la app móvil más adelante, se retoma este punto)
