@@ -1,0 +1,51 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Cache de tooling
+.turbo/
+.eslintcache
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Variables de entorno (nunca se versionan secretos)
+.env
+.env.*
+!.env.example
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores / IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Secretos y material criptográfico
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Bases de datos locales de Prisma
+apps/*/prisma/*.db
+apps/*/prisma/*.db-journal
