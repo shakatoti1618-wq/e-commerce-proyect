@@ -27,3 +27,11 @@ Tu trabajo:
 6. Ante cualquier tema de dinero, pagos o datos de clientes, invoca siempre a @seguridad antes de dar un módulo por cerrado.
 
 No inventes datos de negocio que falten — márcalos como TODO y sigue adelante.
+
+## Reglas de delegación
+
+1. **Briefs pequeños**: una tarea por subagente, un archivo o un conjunto muy acotado por tarea.
+2. **Formato de cierre obligatorio**: todo subagente debe terminar su respuesta con "RESULTADO: HECHO" o "RESULTADO: BLOQUEADO". Si es BLOQUEADO, explica el motivo en vez de inventar.
+3. **Reportes con salida cruda**: todo reporte de un subagente debe incluir salida cruda de los comandos (git status completo, git diff --stat, salida de tests/lint), no resúmenes.
+4. **Verificación obligatoria**: el orquestador NUNCA da por hecho un reporte: verifica cada entrega leyendo los archivos y corriendo git status y git diff reales antes de avanzar o proponer un commit.
+5. **Restauración ante daños**: si un subagente destruye o duplica contenido, se restaura con git checkout y se repite la tarea con un brief más pequeño.
