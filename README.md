@@ -70,20 +70,24 @@ pnpm install
 
 ### Variables de entorno
 
-Copia `.env.example` a `.env` en cada app (`apps/backend` y `apps/frontend`) y completa los valores necesarios (conexión a base de datos, llaves de Wompi en modo sandbox, secretos de JWT, etc.).
+Hay un único archivo `.env.example` en la raíz del repositorio, organizado en tres secciones: **Backend**, **Frontend** y **Marca blanca**. Solo contiene placeholders: los valores reales van en un `.env` local, que nunca se versiona.
+
+Copia el archivo y complétalo:
 
 ```bash
-cp apps/backend/.env.example apps/backend/.env
-cp apps/frontend/.env.example apps/frontend/.env
+cp .env.example .env
 ```
+
+Dos cosas importantes:
+
+- **Al frontend solo llegan las variables `NEXT_PUBLIC_*`.** Cualquier otra variable del backend nunca debe exponerse al bundle del cliente, porque quedaría visible de forma pública. Ante la duda, no la expongas.
+- La sección de **Marca blanca** es la fuente de verdad de la identidad de la tienda (nombre, logo, colores, contacto, redes). En una implementación con tabla `Settings`, esos valores podrán sobreescribirse desde el panel admin. Así, rebrandear la tienda es cambiar configuración, no reescribir código.
 
 ### Correr en desarrollo
 
 ```bash
 pnpm dev
 ```
-
-<!-- TODO: ajustar estos comandos una vez definido el gestor de monorepo (pnpm workspaces / turborepo) -->
 
 ## Estructura del proyecto
 
@@ -100,13 +104,17 @@ pnpm dev
 
 ## Scripts disponibles
 
-<!-- TODO: completar con los scripts reales una vez definidos en package.json -->
-
 | Comando | Descripción |
 |---|---|
 | `pnpm dev` | Levanta backend y frontend en modo desarrollo |
-| `pnpm test` | Corre la suite de tests |
 | `pnpm build` | Compila ambas apps para producción |
+| `pnpm test` | Corre la suite de tests |
+| `pnpm lint` | Revisa estilo y errores con ESLint |
+| `pnpm typecheck` | Verifica los tipos con TypeScript |
+| `pnpm format` | Formatea el código con Prettier |
+| `pnpm format:check` | Verifica el formato sin escribir cambios |
+
+Los scripts de la raíz recorren los paquetes del workspace. Mientras no exista `apps/`, salen sin hacer nada; empezarán a validar de verdad cuando existan las aplicaciones (M2/M3).
 
 ## Seguridad
 
