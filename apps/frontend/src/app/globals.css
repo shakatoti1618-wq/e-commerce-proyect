@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/*
+ * Tokens del tema unico "Lujo con color" (lujo con color).
+ *
+ * TODOS los valores de color de este archivo son PROVISIONALES y estan marcados
+ * como TODO de marca. Cuando se defina la paleta real de Lume, se sustituyen
+ * aqui y en ningun otro sitio: los componentes NUNCA llevan colores literales,
+ * solo clases Tailwind derivadas de estos tokens.
+ *
+ * Contraste verificado con la formula WCAG 2.1 (ratio = (L_claro+0.05)/(L_oscuro+0.05)):
+ *   foreground/background    16.88:1  AAA
+ *   foreground/surface      15.68:1  AAA
+ *   muted/background         9.44:1  AAA
+ *   muted/surface            8.77:1  AAA
+ *   primary/background      11.36:1  AAA
+ *   primary/surface         10.55:1  AAA
+ *   accent/background        7.39:1  AAA
+ *   accent/surface           6.86:1  AAA
+ *   border-strong/background  3.34:1  OK para elementos NO textuales (umbral 3:1)
+ *   border-strong/surface    3.11:1  OK para elementos NO textuales (umbral 3:1)
+ *   border/background        1.48:1  SOLO decorativo, nunca texto ni control
+ *
+ * Este tema es UNICO: no hay variante clara/oscura ni toggle.
+ */
+
+@theme {
+  /* TODO marca: confirmar fondo burdeos muy oscuro */
+  --color-background: #16090f;
+  /* TODO marca: confirmar superficie elevada */
+  --color-surface: #241019;
+
+  /* TODO marca: confirmar blanco calido */
+  --color-foreground: #f7ede8;
+  /* TODO marca: confirmar tono apagado */
+  --color-muted: #c9aeb4;
+
+  /* TODO marca: confirmar dorado principal */
+  --color-primary: #e8c07d;
+  /* TODO marca: confirmar acento rose */
+  --color-accent: #d98c7a;
+
+  /* TODO marca: separadores decorativos. NO usar para texto (ratio 1.48:1). */
+  --color-border: #4a2530;
+  /* TODO marca: inputs, controles y anillo de foco. No usar como texto principal. */
+  --color-border-strong: #8a5668;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-brand), system-ui, sans-serif;
+}
