@@ -14,26 +14,43 @@ const httpsUrl = z
     message: 'La URL debe usar el protocolo https',
   });
 
-/** Redes sociales: solo https. */
-const socialUrl = httpsUrl;
+/**
+ * Redes sociales: opcionales y solo https. Una red vacia o invalida se
+ * descarta sola con `.catch(undefined)` y NO invalida el resto de la marca:
+ * el footer simplemente omite las que no existan.
+ */
+const optionalSocialUrl = httpsUrl
+  .optional()
+  .catch(undefined);
 
-/** Logo: admite ruta relativa local (empieza por /) o URL https. */
+/**
+ * Logo: ruta relativa local o URL https.
+ *
+ * Una ruta relativa valida empieza por "/" y su segundo caracter NO puede ser
+ * "/" ni "\". Asi se rechazan las rutas protocol-relative como "//evil.com/x"
+ * y "/\evil.com/x", que el navegador interpretaria como otro dominio.
+ */
 const logoSource = z
   .string()
   .min(1)
-  .refine(
-    (value) => value.startsWith('/') || value.startsWith('https://'),
-    { message: 'El logo debe ser una ruta relativa o una URL https' },
-  );
+  .refine((value) => value.startsWith('https://') || isSafeRelativePath(value), {
+    message: 'El logo debe ser una ruta relativa segura o una URL https',
+  });
+
+function isSafeRelativePath(value: string): boolean {
+  if (!value.startsWith('/')) return false;
+  const second = value[1];
+  return second !== '/' && second !== '\\';
+}
 
 export const brandSchema = z.object({
-  name: z.string().min(1),
-  tagline: z.string(),
+  name: z.string().min(1).max(60),
+  tagline: z.string().max(160),
   logo: logoSource,
   social: z.object({
-    instagram: socialUrl,
-    facebook: socialUrl,
-    tiktok: socialUrl,
+    instagram: optionalSocialUrl,
+    facebook: optionalSocialUrl,
+    tiktok: optionalSocialUrl,
   }),
 });
 
@@ -41,20 +58,28 @@ export type BrandIdentity = z.infer<typeof brandSchema>;
 
 /**
  * Fixture provisional. TODO marca: sustituir por datos reales de la marca.
+ *
+ * No incluye redes sociales: son datos de negocio reales y no se inventan.
+ * El footer omitira las que no existan.
  */
 export const localBrandFixture: BrandIdentity = {
   name: 'Lume',
   tagline: 'TODO: eslogan definitivo de la marca',
   logo: '/logo.svg',
-  social: {
-    instagram: 'https://instagram.com/todo',
-    facebook: 'https://facebook.com/todo',
-    tiktok: 'https://tiktok.com/todo',
-  },
+  social: {},
 };
 
 const SETTINGS_PATH = '/api/settings';
 const REQUEST_TIMEOUT_MS = 2000;
+
+/**
+ * `next` no forma parte del `RequestInit` de lib.dom hasta que Next genera
+ * `next-env.d.ts` (que aporta la amplificacion global de tipos). Se declara
+ * aqui la opcion de cacheo para no depender de esa referencia generada.
+ */
+type NextFetchRequestInit = RequestInit & {
+  next?: { revalidate: number };
+};
 
 async function fetchBrandFromApi(): Promise<BrandIdentity | null> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -66,9 +91,12 @@ async function fetchBrandFromApi(): Promise<BrandIdentity | null> {
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${baseUrl}${SETTINGS_PATH}`, {
+    const requestInit: NextFetchRequestInit = {
       signal: controller.signal,
-    });
+      next: { revalidate: 3600 },
+    };
+
+    const response = await fetch(`${baseUrl}${SETTINGS_PATH}`, requestInit);
 
     if (!response.ok) {
       return null;
