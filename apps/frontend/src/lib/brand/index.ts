@@ -72,15 +72,6 @@ export const localBrandFixture: BrandIdentity = {
 const SETTINGS_PATH = '/api/settings';
 const REQUEST_TIMEOUT_MS = 2000;
 
-/**
- * `next` no forma parte del `RequestInit` de lib.dom hasta que Next genera
- * `next-env.d.ts` (que aporta la amplificacion global de tipos). Se declara
- * aqui la opcion de cacheo para no depender de esa referencia generada.
- */
-type NextFetchRequestInit = RequestInit & {
-  next?: { revalidate: number };
-};
-
 async function fetchBrandFromApi(): Promise<BrandIdentity | null> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!baseUrl) {
@@ -91,12 +82,10 @@ async function fetchBrandFromApi(): Promise<BrandIdentity | null> {
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const requestInit: NextFetchRequestInit = {
+    const response = await fetch(`${baseUrl}${SETTINGS_PATH}`, {
       signal: controller.signal,
       next: { revalidate: 3600 },
-    };
-
-    const response = await fetch(`${baseUrl}${SETTINGS_PATH}`, requestInit);
+    });
 
     if (!response.ok) {
       return null;
