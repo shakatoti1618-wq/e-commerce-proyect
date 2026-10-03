@@ -4,8 +4,8 @@
  * Tokens del tema unico "Lujo con color" (lujo con color).
  *
  * TODOS los valores de color de este archivo son PROVISIONALES y estan marcados
- * como TODO de marca. Cuando se defina la paleta real de Lume, se sustituyen
- * aqui y en ningun otro sitio: los componentes NUNCA llevan colores literales,
+ * como TODO de marca. Cuando se defina la paleta real de la marca,
+ * se sustituyen aqui y en ningun otro sitio: los componentes NUNCA llevan colores literales,
  * solo clases Tailwind derivadas de estos tokens.
  *
  * Contraste verificado con la formula WCAG 2.1 (ratio = (L_claro+0.05)/(L_oscuro+0.05)):
@@ -16,7 +16,7 @@
  *   primary/background      11.36:1  AAA
  *   primary/surface         10.55:1  AAA
  *   accent/background        7.39:1  AAA
- *   accent/surface           6.86:1  AAA
+ *   accent/surface           6.86:1  AA
  *   border-strong/background  3.34:1  OK para elementos NO textuales (umbral 3:1)
  *   border-strong/surface    3.11:1  OK para elementos NO textuales (umbral 3:1)
  *   border/background        1.48:1  SOLO decorativo, nunca texto ni control
