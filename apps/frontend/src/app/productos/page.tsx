@@ -12,9 +12,7 @@ export default function ProductsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">
       <h1>Productos</h1>
-      <p className="text-muted">
-        El catálogo de productos llega en un módulo posterior.
-      </p>
+      <p className="text-muted">El catálogo de productos llega en un módulo posterior.</p>
     </div>
   );
 }

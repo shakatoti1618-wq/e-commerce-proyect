@@ -16,8 +16,8 @@ export default async function AboutPage() {
     <div className="mx-auto max-w-6xl px-4 py-16">
       <h1>Sobre {brand.name}</h1>
       <p className="text-muted">
-        La historia de la marca está pendiente de definición. Este contenido
-        llega en un módulo posterior.
+        La historia de la marca está pendiente de definición. Este contenido llega en un módulo
+        posterior.
       </p>
     </div>
   );

@@ -45,9 +45,7 @@ export interface SocialLink {
  * el pie de pagina solo muestre enlaces reales. El tipo del esquema ya es
  * opcional: esto es la segunda barrera, por si el dato llega sin limpiar.
  */
-export function collectSocialLinks(
-  social: BrandIdentity['social'],
-): readonly SocialLink[] {
+export function collectSocialLinks(social: BrandIdentity['social']): readonly SocialLink[] {
   return (Object.keys(socialNetworkLabels) as SocialNetwork[])
     .map((network) => ({ network, href: social[network]?.trim() ?? '' }))
     .filter((link) => link.href.length > 0);

@@ -10,8 +10,7 @@ export default function ContactPage() {
     <div className="mx-auto max-w-6xl px-4 py-16">
       <h1>Contacto</h1>
       <p className="text-muted">
-        Los datos de contacto están pendientes de definir. Llegen en un módulo
-        posterior.
+        Los datos de contacto están pendientes de definir. Llegen en un módulo posterior.
       </p>
     </div>
   );

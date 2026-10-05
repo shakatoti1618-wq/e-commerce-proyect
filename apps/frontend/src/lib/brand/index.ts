@@ -19,9 +19,7 @@ const httpsUrl = z
  * descarta sola con `.catch(undefined)` y NO invalida el resto de la marca:
  * el footer simplemente omite las que no existan.
  */
-const optionalSocialUrl = httpsUrl
-  .optional()
-  .catch(undefined);
+const optionalSocialUrl = httpsUrl.optional().catch(undefined);
 
 /**
  * Logo: ruta relativa local segura o URL https valida.

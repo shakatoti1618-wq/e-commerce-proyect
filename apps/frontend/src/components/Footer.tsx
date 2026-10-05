@@ -1,10 +1,6 @@
 import Link from 'next/link';
 import type { BrandIdentity } from '@/lib/brand';
-import {
-  collectSocialLinks,
-  navigationLinks,
-  socialNetworkLabels,
-} from '@/lib/navigation';
+import { collectSocialLinks, navigationLinks, socialNetworkLabels } from '@/lib/navigation';
 
 interface FooterProps {
   brand: BrandIdentity;
@@ -28,10 +24,7 @@ export default function Footer({ brand }: FooterProps) {
           <ul className="flex flex-col gap-2">
             {navigationLinks.map((link) => (
               <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-muted hover:text-foreground"
-                >
+                <Link href={link.href} className="text-muted hover:text-foreground">
                   {link.label}
                 </Link>
               </li>

@@ -26,10 +26,7 @@ export default function Header({ brand }: HeaderProps) {
             <ul className="hidden items-center gap-6 md:flex">
               {navigationLinks.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-foreground hover:text-primary"
-                  >
+                  <Link href={link.href} className="text-foreground hover:text-primary">
                     {link.label}
                   </Link>
                 </li>
