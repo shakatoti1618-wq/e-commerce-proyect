@@ -24,34 +24,62 @@ const optionalSocialUrl = httpsUrl
   .catch(undefined);
 
 /**
- * Logo: ruta relativa local o URL https.
+ * Logo: ruta relativa local segura o URL https valida.
  *
- * Una ruta relativa valida empieza por "/" y su segundo caracter NO puede ser
- * "/" ni "\". Asi se rechazan las rutas protocol-relative como "//evil.com/x"
- * y "/\evil.com/x", que el navegador interpretaria como otro dominio.
+ * Una ruta relativa solo es aceptable si, al resolverla el navegador, sigue
+ * sirviendo el mismo origen. Se rechazan de forma explicita:
+ *   - las rutas protocol-relative ("//evil.com/x"): el navegador las trata
+ *     como URL absoluta;
+ *   - cualquier barra invertida o barra al inicio;
+ *   - tabulacion, salto de linea, retorno de carro, espacio y CUALQUIER otro
+ *     caracter de control: el navegador los elimina al parsear la URL, asi
+ *     que "/\t/evil.com/x" se convertia en "//evil.com/x" y terminaba
+ *     sirviendo otro dominio;
+ *   - y, como comprobacion de respaldo, la ruta se resuelve con
+ *     `new URL()` contra un origen base y el origen resultante debe seguir
+ *     siendo ese mismo origen.
  */
 const logoSource = z
   .string()
   .min(1)
-  .refine((value) => value.startsWith('https://') || isSafeRelativePath(value), {
-    message: 'El logo debe ser una ruta relativa segura o una URL https',
+  .refine((value) => isSafeLocalPath(value) || isSafeHttpsUrl(value), {
+    message: 'El logo debe ser una ruta relativa local segura o una URL https',
   });
 
-function isSafeRelativePath(value: string): boolean {
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f\s\\]/;
+
+function isSafeLocalPath(value: string): boolean {
   if (!value.startsWith('/')) return false;
   const second = value[1];
-  return second !== '/' && second !== '\\';
+  if (second === '/' || second === '\\') return false;
+  if (CONTROL_CHARACTERS.test(value)) return false;
+  return resolvesToSameOrigin(value);
+}
+
+function isSafeHttpsUrl(value: string): boolean {
+  return httpsUrl.safeParse(value).success;
+}
+
+function resolvesToSameOrigin(value: string): boolean {
+  const base = 'https://placeholder.invalid';
+  try {
+    return new URL(value, base).origin === base;
+  } catch {
+    return false;
+  }
 }
 
 export const brandSchema = z.object({
   name: z.string().min(1).max(60),
   tagline: z.string().max(160),
   logo: logoSource,
-  social: z.object({
-    instagram: optionalSocialUrl,
-    facebook: optionalSocialUrl,
-    tiktok: optionalSocialUrl,
-  }),
+  social: z
+    .object({
+      instagram: optionalSocialUrl,
+      facebook: optionalSocialUrl,
+      tiktok: optionalSocialUrl,
+    })
+    .default({}),
 });
 
 export type BrandIdentity = z.infer<typeof brandSchema>;
