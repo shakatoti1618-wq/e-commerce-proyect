@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: sustituir por el icono definitivo. TODO marca. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Marca">
+  <title>Marca</title>
+  <rect x="0" y="0" width="32" height="32" rx="6" fill="#16090f" />
+  <circle cx="16" cy="16" r="9" fill="#e8c07d" />
+  <path d="M16 8 L24 16 L16 24 L8 16 Z" fill="#d98c7a" />
+  <circle cx="16" cy="16" r="3.5" fill="#16090f" />
+</svg>
