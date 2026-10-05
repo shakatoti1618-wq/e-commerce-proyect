@@ -10,7 +10,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandIdentity();
 
   return {
-    title: brand.name,
+    title: {
+      default: brand.name,
+      template: `%s | ${brand.name}`,
+    },
     description: brand.tagline,
   };
 }
