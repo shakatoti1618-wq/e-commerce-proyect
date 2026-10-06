@@ -14,14 +14,7 @@ interface LogoProps {
 export default function Logo({ brand }: LogoProps) {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <Image
-        src={brand.logo}
-        alt={brand.name}
-        width={64}
-        height={64}
-        unoptimized
-        className="h-10 w-10"
-      />
+      <Image src={brand.logo} alt="" width={64} height={64} unoptimized className="h-10 w-10" />
       <span className="text-lg font-semibold">{brand.name}</span>
     </Link>
   );

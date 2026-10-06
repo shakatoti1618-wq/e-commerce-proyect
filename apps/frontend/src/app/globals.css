@@ -51,3 +51,30 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-brand), system-ui, sans-serif;
 }
+
+/*
+ * Anillo de foco global para todo el sitio.
+ *
+ * Va en @layer base a proposito: las utilidades focus:* de Tailwind viven en
+ * la capa utilities, que tiene mas especificidad de orden, asi que un anillo
+ * utilitario (por ejemplo el antiguo focus:outline-border-strong del
+ * SkipLink) puede seguir sobrescribiendo este valor cuando el elemento
+ * recibe foco.
+ *
+ * Color: --color-primary. Contraste verificado con la formula WCAG 2.1
+ * (ratio = (L_claro+0.05)/(L_oscuro+0.05)):
+ *   primary/background      11.36:1  AAA
+ *   primary/surface         10.55:1  AAA
+ * Ambos superan con holgura el umbral 3:1 de WCAG 1.4.11 (Contraste no
+ * textual), que es el que aplica a un anillo de foco.
+ *
+ * NOTA: el `body` de arriba se deja SIN capa a proposito. En CSS las reglas
+ * sin capa ganan a las que si la tienen, asi que envolverlo en @layer base
+ * cambiaria su comportamiento real frente a las utilidades de Tailwind.
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

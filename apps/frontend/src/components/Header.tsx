@@ -22,8 +22,8 @@ export default function Header({ brand }: HeaderProps) {
         <div className="flex items-center justify-between gap-4">
           <Logo brand={brand} />
 
-          <nav aria-label="Navegación principal">
-            <ul className="hidden items-center gap-6 md:flex">
+          <nav aria-label="Navegación principal" className="hidden md:block">
+            <ul className="items-center gap-6 md:flex">
               {navigationLinks.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-foreground hover:text-primary">
