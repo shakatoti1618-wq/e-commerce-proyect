@@ -24,7 +24,7 @@ export default function MobileNav() {
   }
 
   return (
-    <nav aria-label="Navegación principal" className="md:hidden" onKeyDown={handleKeyDown}>
+    <div className="md:hidden" onKeyDown={handleKeyDown}>
       <button
         type="button"
         ref={buttonRef}
@@ -53,6 +53,6 @@ export default function MobileNav() {
           </li>
         ))}
       </ul>
-    </nav>
+    </div>
   );
 }
