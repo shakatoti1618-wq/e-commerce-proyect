@@ -57,9 +57,8 @@ body {
  *
  * Va en @layer base a proposito: las utilidades focus:* de Tailwind viven en
  * la capa utilities, que tiene mas especificidad de orden, asi que un anillo
- * utilitario (por ejemplo el antiguo focus:outline-border-strong del
- * SkipLink) puede seguir sobrescribiendo este valor cuando el elemento
- * recibe foco.
+ * utilitario de un elemento concreto puede sobrescribir este valor cuando ese
+ * elemento recibe foco.
  *
  * Color: --color-primary. Contraste verificado con la formula WCAG 2.1
  * (ratio = (L_claro+0.05)/(L_oscuro+0.05)):
@@ -73,6 +72,24 @@ body {
  * cambiaria su comportamiento real frente a las utilidades de Tailwind.
  */
 @layer base {
+  /*
+   * Estilos base de titulos. Solo TAMANO y PESO: el color se hereda de body
+   * (--color-foreground) y por eso aqui no hay ningun color literal.
+   *
+   * Los valores salen de las variables del tema de Tailwind v4, no de numeros
+   * sueltos, asi que los titulos quedan atados a la escala tipografica:
+   * h1 es el titular de pagina y h2 la seccion, por encima del cuerpo del texto.
+   */
+  h1 {
+    font-size: var(--text-4xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
