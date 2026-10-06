@@ -39,6 +39,12 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      - name: Formato (prettier)
+        run: pnpm exec prettier --check .
+
+      - name: Lint de archivos de configuracion
+        run: pnpm exec eslint .
+
       - name: Lint
         run: pnpm lint
 
