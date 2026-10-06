@@ -10,8 +10,6 @@ export interface NavigationLink {
  * TODO navegacion: los destinos y sus ordenes son PROVISIONALES. La fuente
  * unica son estos datos: header, menu movil y pie los consumen desde aqui, de
  * modo que anadir una pagina nueva no obliga a tocar JSX.
- *
- * Las rutas /productos, /nosotros y /contacto llegan en un modulo posterior.
  */
 export const navigationLinks: readonly NavigationLink[] = [
   { href: '/', label: 'Inicio' },
@@ -41,12 +39,17 @@ export interface SocialLink {
 }
 
 /**
- * Descarta las redes ausentes y las que llegan vacias o con espacios, para que
- * el pie de pagina solo muestre enlaces reales. El tipo del esquema ya es
- * opcional: esto es la segunda barrera, por si el dato llega sin limpiar.
+ * Descarta las redes ausentes y las que llegan vacias, con espacios alrededor o
+ * cuya URL no es https, para que el pie de pagina solo muestre enlaces reales.
+ *
+ * El esquema Zod de la marca ya filtra lo que no sea https valido (`.catch` lo
+ * deja como `undefined`), pero esta es la segunda barrera: la funcion es segura
+ * por si misma y no depende solo del esquema. La comparacion es exacta y en
+ * minusculas (`'https://'`), asi que `http://`, `//` o `HTTPS://` se descartan.
  */
 export function collectSocialLinks(social: BrandIdentity['social']): readonly SocialLink[] {
   return (Object.keys(socialNetworkLabels) as SocialNetwork[])
     .map((network) => ({ network, href: social[network]?.trim() ?? '' }))
-    .filter((link) => link.href.length > 0);
+    .filter((link) => link.href.length > 0)
+    .filter((link) => link.href.startsWith('https://'));
 }
