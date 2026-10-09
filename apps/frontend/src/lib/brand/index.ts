@@ -71,13 +71,20 @@ export const brandSchema = z.object({
   name: z.string().min(1).max(60),
   tagline: z.string().max(160),
   logo: logoSource,
+  /*
+   * `social` es opcional a nivel de objeto: `.default({})` cubre el ausente
+   * (`undefined`) y `.catch({})` tolera un `null` explicito, normalizandolo a
+   * `{}`. El resto del esquema sigue siendo FAIL-CLOSED: `name`, `tagline` y
+   * `logo` invalidos o ausentes tumban TODO el safeParse (-> fixture local).
+   */
   social: z
     .object({
       instagram: optionalSocialUrl,
       facebook: optionalSocialUrl,
       tiktok: optionalSocialUrl,
     })
-    .default({}),
+    .default({})
+    .catch({}),
 });
 
 export type BrandIdentity = z.infer<typeof brandSchema>;
