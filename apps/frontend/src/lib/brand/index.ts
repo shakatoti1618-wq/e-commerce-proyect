@@ -76,9 +76,17 @@ export const brandSchema = z.object({
   tagline: z.string().max(160),
   logo: logoSource,
   /*
-   * `social` es opcional a nivel de objeto: `.default({})` cubre el ausente
-   * (`undefined`) y `.catch({})` tolera un `null` explicito, normalizandolo a
-   * `{}`. El resto del esquema sigue siendo FAIL-CLOSED: `name`, `tagline` y
+   * `social` es opcional a nivel de objeto. `.default({})` cubre el campo
+   * ausente (`undefined`). `.catch({})` normaliza a `{}` CUALQUIER valor que
+   * no sea un objeto valido (es decir, `null`, string, numero, array o
+   * booleano), no solo un `null` explicito.
+   *
+   * Consecuencia: ante un `social` invalido, las redes sociales se pierden
+   * sin traza y no se distingue de un campo ausente. Dentro de un objeto
+   * mixto, las redes validas se conservan y las invalidas se descartan por
+   * campo (via `optionalSocialUrl`).
+   *
+   * El resto del esquema sigue siendo FAIL-CLOSED: `name`, `tagline` y
    * `logo` invalidos o ausentes tumban TODO el safeParse (-> fixture local).
    */
   social: z
