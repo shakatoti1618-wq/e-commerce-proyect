@@ -6,7 +6,7 @@ Línea de tiempo del proyecto: un registro corto por cada módulo cerrado y por 
 | --- | --- | --- |
 | 2026-09-30 | Corrección de configuración previa al M0 | Se agrega el agente `@devops` (monorepo, tooling, commits y CI), se crea el `.gitignore` de la raíz y se ajustan los permisos de los agentes. |
 | 2026-10-01 | M0 — Análisis y setup inicial | Monorepo con pnpm workspaces, pnpm 12.8.1 fijado, Node 24 LTS, TypeScript estricto, ESLint + Prettier (decidido sobre Biome con pruebas ejecutadas), CI con build bloqueante y commitlint solo en CI, y un único `.env.example` en la raíz. Decisiones en ADR-001 a ADR-004. |
-| 2026-10-08 | M2 — Frontend base (Next.js) | 24 commits sobre `main` (del 2026-10-02 al 2026-10-08); tema único burdeos/negro/dorado sin dark mode; identidad de marca por cliente de Settings con fixture local y fallback a `/api/settings`; 4 rutas públicas placeholder (`/`, `/productos`, `/nosotros`, `/contacto`) accesibles; ESLint 9 temporal solo en `apps/frontend` (raíz en ESLint 10); auditoría de seguridad sin críticos ni altos y 4 fixes posteriores. Detalle en ADR-005. |
+| 2026-10-08 | M2 — Frontend base (Next.js) | 26 commits sobre `main` (23 de implementación y configuración, 3 de documentación), del 2026-10-02 al 2026-10-08; tema único burdeos/negro/dorado sin dark mode; identidad de marca por cliente de Settings con fixture local y fallback a `/api/settings`; 4 rutas públicas placeholder (`/`, `/productos`, `/nosotros`, `/contacto`) accesibles; ESLint 9 temporal solo en `apps/frontend` (raíz en ESLint 10); auditoría de seguridad sin críticos ni altos y 4 fixes posteriores. Detalle en ADR-005. |
 
 ## Diferidos de M2
 
