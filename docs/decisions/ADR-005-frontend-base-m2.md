@@ -170,12 +170,11 @@ son:
 
 ## Verificación ejecutada
 
-- `git rev-list --count main..HEAD` = 26 commits sobre `main`, del 2026-10-02 al
-  2026-10-08: 23 de implementación y configuración y 3 de documentación. La
-  rama parte de `main` en `dbfb659` (merge del PR #1); la base revisada por la
-  auditoría es `70c0242` y el HEAD del cierre técnico es `ca21337`. La cuenta de
-  24 era la del cierre técnico en `ca21337`; los 2 commits de documentación
-  posteriores (`9f92e42`, `2e113d8`) completan el total de 26.
+- `git rev-list --count main..ca21337` (cierre técnico del módulo) = 24 commits,
+  del 2026-10-02 al 2026-10-08, de los cuales 23 son de implementación y
+  configuración. La rama parte de `main` en `dbfb659` (merge del PR #1); la base
+  revisada por la auditoría es `70c0242` y el HEAD del cierre técnico es
+  `ca21337`.
 - Los 24 commits del módulo hasta el cierre técnico (`ca21337`), de más reciente
   a más antiguo:
 
@@ -206,11 +205,12 @@ son:
   27015ab chore(repo): ignore frontend in root eslint and skip unrs-resolver build
   ```
 
-- Después del cierre técnico (`ca21337`) se añadieron 2 commits de
-  documentación: `9f92e42` (`docs: add ADR-005 frontend base`) y `2e113d8`
-  (`docs: add M2 closure entry`). Con ellos la rama suma 26 commits: los 23 de
-  implementación y configuración de la lista anterior más los 3 de
-  documentación (`ca21337`, `9f92e42`, `2e113d8`).
+- De esos 24, `ca21337` es de tipo `docs` (corrige el comentario del schema). A
+  partir de ahí, la documentación de cierre añade los commits `docs:` de este
+  módulo (ADR-005, entrada de bitácora y las correcciones de conteo). Por eso el
+  desglose estable es: **23 commits de implementación y configuración** + los
+  commits `docs:` correspondientes. El total de la rama se verifica en el
+  momento de abrir el PR con `git rev-list --count main..HEAD`.
 - En los 4 fixes de auditoría se ejecutaron `pnpm format:check`, `pnpm
   typecheck`, `pnpm lint` y `pnpm build`: exit 0 en todos.
 - Verificación del usuario: `/`, `/productos`, `/nosotros` y `/contacto`

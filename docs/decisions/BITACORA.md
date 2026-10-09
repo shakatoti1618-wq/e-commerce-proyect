@@ -6,7 +6,7 @@ Línea de tiempo del proyecto: un registro corto por cada módulo cerrado y por 
 | --- | --- | --- |
 | 2026-09-30 | Corrección de configuración previa al M0 | Se agrega el agente `@devops` (monorepo, tooling, commits y CI), se crea el `.gitignore` de la raíz y se ajustan los permisos de los agentes. |
 | 2026-10-01 | M0 — Análisis y setup inicial | Monorepo con pnpm workspaces, pnpm 12.8.1 fijado, Node 24 LTS, TypeScript estricto, ESLint + Prettier (decidido sobre Biome con pruebas ejecutadas), CI con build bloqueante y commitlint solo en CI, y un único `.env.example` en la raíz. Decisiones en ADR-001 a ADR-004. |
-| 2026-10-08 | M2 — Frontend base (Next.js) | 26 commits sobre `main` (23 de implementación y configuración, 3 de documentación), del 2026-10-02 al 2026-10-08; tema único burdeos/negro/dorado sin dark mode; identidad de marca por cliente de Settings con fixture local y fallback a `/api/settings`; 4 rutas públicas placeholder (`/`, `/productos`, `/nosotros`, `/contacto`) accesibles; ESLint 9 temporal solo en `apps/frontend` (raíz en ESLint 10); auditoría de seguridad sin críticos ni altos y 4 fixes posteriores. Detalle en ADR-005. |
+| 2026-10-08 | M2 — Frontend base (Next.js) | Módulo cerrado el 2026-10-08 con 23 commits de implementación y configuración (más los commits `docs:` de esta documentación de cierre), del 2026-10-02 al 2026-10-08; tema único burdeos/negro/dorado sin dark mode; identidad de marca por cliente de Settings con fixture local y fallback a `/api/settings`; 4 rutas públicas placeholder (`/`, `/productos`, `/nosotros`, `/contacto`) accesibles; ESLint 9 temporal solo en `apps/frontend` (raíz en ESLint 10); auditoría de seguridad sin críticos ni altos y 4 fixes posteriores. Detalle en ADR-005. |
 
 ## Diferidos de M2
 
@@ -28,7 +28,7 @@ Nota: los pendientes de M0 de la sección siguiente siguen abiertos; M2 no los c
 
 Estos puntos quedaron abiertos al cerrar M0 y hay que resolverlos más adelante:
 
-- El CI nunca se ha ejecutado: no hubo push. Hay que verificarlo en el primer push a `main`.
+- El CI nunca se ha ejecutado: no hubo push. Hay que verificarlo en el primer push a `main`. **Resuelto por el PR #1 (CI en verde), merge 2026-10-01.**
 - El paso de commitlint por rango no se ha probado en un PR ni en un push real.
 - Caso edge: en el push inicial de una rama, `github.event.before` es `0000000000000000000000000000000000000000` y el rango de commits no se puede calcular.
 - `.github/workflows/ci.yml` no documenta ese caso edge con un comentario.
