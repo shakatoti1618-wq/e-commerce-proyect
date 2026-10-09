@@ -48,6 +48,10 @@ const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f\s\\]/;
 
 function isSafeLocalPath(value: string): boolean {
   if (!value.startsWith('/')) return false;
+  // La raiz '/' se rechaza de forma explicita: no es un asset, sino el HTML
+  // de la home, asi que usarla como logo produce una imagen rota y una
+  // peticion inutil. El resto de rutas locales siguen validandose igual.
+  if (value === '/') return false;
   const second = value[1];
   if (second === '/' || second === '\\') return false;
   if (CONTROL_CHARACTERS.test(value)) return false;
