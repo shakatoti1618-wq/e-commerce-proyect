@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/.next/**',
       '**/coverage/**',
       '**/*.tsbuildinfo',
+      'apps/frontend/**',
     ],
   },
   eslint.configs.recommended,
