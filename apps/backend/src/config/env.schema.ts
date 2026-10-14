@@ -8,7 +8,7 @@ const BOOLEAN_STRING_VALUES = ['true', 'false'] as const;
 
 export const envSchema = z
   .object({
-    // Obligatoria y sin default: si falta o es invǭlida se aborta el arranque.
+    // Obligatoria y sin default: si falta o es inválida se aborta el arranque.
     NODE_ENV: z.enum(NODE_ENVIRONMENTS),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
