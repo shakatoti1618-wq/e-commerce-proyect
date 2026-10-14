@@ -102,7 +102,18 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       return INTERNAL_SERVER_ERROR_DETAIL;
     }
 
-    return this.extractSafeDetail(exception.getResponse(), status);
+    return this.sanitizeDetail(this.extractSafeDetail(exception.getResponse(), status));
+  }
+
+  /**
+   * Elimina la query string de subcadenas con forma de URL en el detalle.
+   *
+   * La query puede transportar secretos (`?token=...`) y, a diferencia del
+   * resto del mensaje, el cliente no controla qué se refleja: se recorta la
+   * ruta y se descarta todo lo que venga despues de `?`.
+   */
+  private sanitizeDetail(detail: string): string {
+    return detail.replace(/(\/[^\s?;,)}]*)(?:\?[^\s;,)}]*)/g, '$1');
   }
 
   /**

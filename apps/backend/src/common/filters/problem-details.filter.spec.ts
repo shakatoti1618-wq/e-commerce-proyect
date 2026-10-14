@@ -174,6 +174,42 @@ describe('ProblemDetailsFilter', () => {
   });
 });
 
+describe('ProblemDetailsFilter query sanitization', () => {
+  it('removes query string from NotFoundException detail with URL-like message', () => {
+    const { filter } = createFilter();
+    const { host, response } = createHost({ originalUrl: '/api/nope', url: '/api/nope' });
+
+    filter.catch(new NotFoundException('Cannot GET /api/nope?secret=XYZ'), host);
+
+    expect(response.body?.detail).toBe('Cannot GET /api/nope');
+    expect(JSON.stringify(response.body)).not.toContain('XYZ');
+    expect(JSON.stringify(response.body)).not.toContain('secret');
+  });
+
+  it('sanitizes query strings inside array messages of BadRequestException', () => {
+    const { filter } = createFilter();
+    const { host, response } = createHost({ originalUrl: '/o', url: '/o' });
+
+    filter.catch(
+      new BadRequestException({ message: ['fallo en /o?token=ABC', 'campo B invalido'] }),
+      host,
+    );
+
+    expect(response.body?.detail).toBe('fallo en /o; campo B invalido');
+    expect(JSON.stringify(response.body)).not.toContain('ABC');
+    expect(JSON.stringify(response.body)).not.toContain('token');
+  });
+
+  it('does not alter details without query strings', () => {
+    const { filter } = createFilter();
+    const { host, response } = createHost({ originalUrl: '/', url: '/' });
+
+    filter.catch(new BadRequestException('Are you sure?'), host);
+
+    expect(response.body?.detail).toBe('Are you sure?');
+  });
+});
+
 describe('ProblemDetailsFilter logging', () => {
   it('logs 5xx failures at error level with the raw error server-side', () => {
     const { filter, logger } = createFilter();
