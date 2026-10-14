@@ -63,6 +63,14 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   return parsed.data;
 }
 
+/**
+ * Allowlist fail-closed de entornos que pueden leer el archivo `.env`.
+ *
+ * Solo `development` y `test` cargan el archivo. Cualquier otro valor (incluido
+ * `production`, `undefined` o un NODE_ENV desconocido) hace que se ignore.
+ */
+const ENV_FILE_ALLOWED_NODE_ENVIRONMENTS = new Set<string>(['development', 'test']);
+
 export function shouldIgnoreEnvFile(nodeEnv: string | undefined): boolean {
-  return nodeEnv === 'production';
+  return nodeEnv === undefined || !ENV_FILE_ALLOWED_NODE_ENVIRONMENTS.has(nodeEnv);
 }

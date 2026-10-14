@@ -148,11 +148,26 @@ describe('validateEnv', () => {
     expect(env.ENABLE_SWAGGER).toBe(false);
   });
 
-  it('returns correct shouldIgnoreEnvFile behavior', () => {
-    expect(shouldIgnoreEnvFile('production')).toBe(true);
-    expect(shouldIgnoreEnvFile('development')).toBe(false);
-    expect(shouldIgnoreEnvFile('test')).toBe(false);
-    expect(shouldIgnoreEnvFile(undefined)).toBe(false);
+  describe('shouldIgnoreEnvFile (allowlist fail-closed)', () => {
+    it('ignores the env file in production', () => {
+      expect(shouldIgnoreEnvFile('production')).toBe(true);
+    });
+
+    it('loads the env file in development', () => {
+      expect(shouldIgnoreEnvFile('development')).toBe(false);
+    });
+
+    it('loads the env file in test', () => {
+      expect(shouldIgnoreEnvFile('test')).toBe(false);
+    });
+
+    it('ignores the env file when NODE_ENV is undefined', () => {
+      expect(shouldIgnoreEnvFile(undefined)).toBe(true);
+    });
+
+    it('ignores the env file for an unknown NODE_ENV value', () => {
+      expect(shouldIgnoreEnvFile('staging')).toBe(true);
+    });
   });
 });
 

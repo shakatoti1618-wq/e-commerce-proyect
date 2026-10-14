@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "start:dev": "tsc -p tsconfig.build.json && node -e \"process.env.NODE_ENV ??= 'development'; require('./dist/main.js')\"",
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
