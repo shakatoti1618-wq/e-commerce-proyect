@@ -47,6 +47,41 @@ const RESERVED_ERROR_FIELDS: ReadonlySet<string> = new Set(['name', 'message', '
 const REDACTED_BEARER_TOKEN = `Bearer ${LOG_CENSOR}`;
 
 /**
+ * Cabeceras que SI se conservan en el log de peticion (allowlist explicita).
+ *
+ * Estrategia de minimo privilegio: en lugar de registrar todas las cabeceras y
+ * confiar en `LOG_REDACT_PATHS` para censurar las peligrosas, solo se emite lo
+ * que aporta valor operativo. Todo lo ausente se descarta por completo (ni clave
+ * ni valor). Node normaliza los nombres entrantes a minusculas, por eso la
+ * comparacion se hace contra claves en minusculas.
+ *
+ * Justificacion:
+ *   - `host`: a que vhost/dominio llego la peticion.
+ *   - `user-agent`: cliente y diagnostico de compatibilidad.
+ *   - `accept`: contenido negociado (depuracion de respuestas 406).
+ *   - `content-type`: naturaleza del body enviado.
+ *   - `accept-encoding`: soporte de compresion negociado.
+ *   - `accept-language`: localizacion solicitada.
+ *   - `content-length`: tamano del payload (util para detectar anomalias).
+ * Ninguna transporta credenciales ni datos de cliente por si misma.
+ */
+export const ALLOWED_REQUEST_HEADERS = [
+  'host',
+  'user-agent',
+  'accept',
+  'content-type',
+  'accept-encoding',
+  'accept-language',
+  'content-length',
+] as const;
+
+/** Nombre de cabecera permitida; subconjunto cerrado de la allowlist. */
+export type AllowedRequestHeader = (typeof ALLOWED_REQUEST_HEADERS)[number];
+
+/** Cabeceras de peticion serializadas: solo las claves permitidas, todas opcionales. */
+export type SerializedRequestHeaders = Partial<Record<AllowedRequestHeader, string>>;
+
+/**
  * Subcadena con forma de URL: se conserva la ruta y se descarta su query string.
  *
  * La query puede transportar secretos (`?token=...`) y suele colarse en
@@ -131,7 +166,7 @@ export interface SerializedRequestLog {
   id: string | undefined;
   method: string;
   url: string;
-  headers: Record<string, string>;
+  headers: SerializedRequestHeaders;
   remoteAddress: string;
   remotePort: number;
 }
@@ -339,12 +374,36 @@ function unwrapRawRequest(request: IncomingMessage): IncomingMessage {
 }
 
 /**
+ * Conserva unicamente las cabeceras de la allowlist (`ALLOWED_REQUEST_HEADERS`).
+ *
+ * Todo lo que no figure en ella se descarta por completo: no se emite ni la
+ * clave ni el valor. Se recorre la allowlist (y no las cabeceras entrantes) para
+ * fijar el orden de salida y evitar copiar claves arbitrarias del cliente.
+ * Node normaliza los nombres entrantes a minusculas, de modo que el lookup
+ * directo por nombre en minusculas es correcto.
+ */
+function pickAllowedHeaders(headers: Record<string, string>): SerializedRequestHeaders {
+  const allowedHeaders: SerializedRequestHeaders = {};
+
+  for (const headerName of ALLOWED_REQUEST_HEADERS) {
+    const headerValue = headers[headerName];
+
+    if (headerValue !== undefined) {
+      allowedHeaders[headerName] = headerValue;
+    }
+  }
+
+  return allowedHeaders;
+}
+
+/**
  * Serializer de `req` para `pino-http`.
  *
- * Conserva unicamente `id`, `method`, `headers`, `remoteAddress`/`remotePort` y
- * un `url` sin query string. `query` y `params` se descartan por completo para
- * que `GET /search?token=abc&email=x` no deje rastro de `abc`, `x` ni `?` en
- * ningun campo del log de peticion.
+ * Conserva unicamente `id`, `method`, las cabeceras de la allowlist,
+ * `remoteAddress`/`remotePort` y un `url` sin query string. `query` y `params` se
+ * descartan por completo para que `GET /search?token=abc&email=x` no deje rastro
+ * de `abc`, `x` ni `?` en ningun campo del log de peticion. El resto de
+ * cabeceras tampoco se copia (ver `pickAllowedHeaders`).
  */
 export function serializeRequest(request: IncomingMessage): SerializedRequestLog {
   const serialized = stdSerializers.req(unwrapRawRequest(request));
@@ -353,7 +412,7 @@ export function serializeRequest(request: IncomingMessage): SerializedRequestLog
     id: serialized.id,
     method: serialized.method,
     url: stripQueryString(serialized.url),
-    headers: serialized.headers,
+    headers: pickAllowedHeaders(serialized.headers),
     remoteAddress: serialized.remoteAddress,
     remotePort: serialized.remotePort,
   };

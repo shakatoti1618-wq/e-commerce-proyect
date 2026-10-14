@@ -249,7 +249,16 @@ describe('serializeRequest', () => {
     return {
       url: '/search?token=abc&email=x',
       method: 'GET',
-      headers: { host: 'lume.test' },
+      headers: {
+        host: 'lume.test',
+        'user-agent': 'vitest-agent',
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: LEAK_SENTINEL,
+        cookie: LEAK_SENTINEL,
+        'x-api-key': LEAK_SENTINEL,
+        'x-custom': LEAK_SENTINEL,
+      },
       id: 'request-id',
       socket: { remoteAddress: '127.0.0.1', remotePort: 4321 },
       ...overrides,
@@ -271,6 +280,27 @@ describe('serializeRequest', () => {
     expect(rawSerialized).not.toContain('abc');
     expect(rawSerialized).not.toContain('token=');
     expect(rawSerialized).not.toContain('email=x');
+  });
+
+  it('keeps the allowlisted headers with their values', () => {
+    const serialized = serializeRequest(createIncomingMessage());
+
+    expect(serialized.headers.host).toBe('lume.test');
+    expect(serialized.headers['user-agent']).toBe('vitest-agent');
+    expect(serialized.headers.accept).toBe('application/json');
+    expect(serialized.headers['content-type']).toBe('application/json');
+  });
+
+  it('drops non-allowlisted and sensitive headers entirely (key and value)', () => {
+    const serialized = serializeRequest(createIncomingMessage());
+    const rawSerialized = JSON.stringify(serialized);
+
+    for (const headerName of ['authorization', 'cookie', 'x-api-key', 'x-custom']) {
+      expect(serialized.headers).not.toHaveProperty(headerName);
+      expect(rawSerialized).not.toContain(headerName);
+    }
+
+    expect(rawSerialized).not.toContain(LEAK_SENTINEL);
   });
 });
 
