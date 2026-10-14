@@ -4,6 +4,8 @@ import { Catch, HttpException } from '@nestjs/common';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 
+import { censorError } from '../../config/logger.config';
+
 /**
  * Cuerpo de error segun RFC 9457 (`application/problem+json`).
  *
@@ -215,7 +217,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     requestId: string | undefined,
   ): void {
     if (status >= SERVER_ERROR_STATUS_THRESHOLD) {
-      this.logger.error({ err: exception, requestId, path }, 'Unhandled exception');
+      this.logger.error({ err: censorError(exception), requestId, path }, 'Unhandled exception');
       return;
     }
 

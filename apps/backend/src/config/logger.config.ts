@@ -38,6 +38,33 @@ const SENSITIVE_FIELD_NAMES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Campos propios de un `Error` que se conservan explicitamente con formato de
+ * error en lugar de censurarse por clave (nunca son secretos y son la base del
+ * diagnostico server-side).
+ */
+const RESERVED_ERROR_FIELDS: ReadonlySet<string> = new Set(['name', 'message', 'stack']);
+
+const REDACTED_BEARER_TOKEN = `Bearer ${LOG_CENSOR}`;
+
+/**
+ * Subcadena con forma de URL: se conserva la ruta y se descarta su query string.
+ *
+ * La query puede transportar secretos (`?token=...`) y suele colarse en
+ * `message`/`stack` a traves de URLs de callback. Mismo patron que
+ * `sanitizeDetail` del filtro, aplicado aqui al texto del error.
+ */
+const URL_QUERY_STRING_PATTERN = /(\/[^\s?;,)}]*)(?:\?[^\s;,)}]*)/g;
+
+/** Cabecera `Authorization: Bearer <token>` embebida en texto libre. */
+const BEARER_TOKEN_PATTERN = /\bBearer\s+\S+/gi;
+
+/**
+ * Par de `clave=valor` (query string o texto libre) cuya clave puede ser
+ * sensible. Se captura el separador inicial para reponerlo intacto.
+ */
+const SENSITIVE_ASSIGNMENT_PATTERN = /([?&;\s]|^)([A-Za-z0-9_-]+)=([^\s&;,)]*)/g;
+
+/**
  * Rutas de redaccion de pino.
  *
  * LIMITE CONOCIDO (verificado empiricamente sobre `@pinojs/redact`, el motor que
@@ -137,8 +164,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  *   - Solo desciende por arrays y objetos planos (prototipo `Object.prototype`
  *     o `null`). Las instancias de clase (`IncomingMessage`, `ServerResponse`,
  *     `Date`, `Buffer`, ...) y los `Error` se devuelven tal cual: de `req`/`res`
- *     se encargan el serializer y `redact`, y del `Error` se conserva el stack
- *     (server-side).
+ *     se encargan el serializer y `redact`, y de los `Error` se encarga
+ *     `censorError`, que redacta `message`/`stack` y sus propiedades enumerables.
  *   - Usa un `WeakMap` original -> copia para resolver referencias circulares sin
  *     recursión infinita. Devolver el objeto original al detectar un ciclo
  *     filtraria los valores sensibles que cuelgan de él, por eso se reutiliza la
@@ -187,6 +214,64 @@ function censorNode(value: unknown, censoredByOriginal: WeakMap<object, unknown>
 
 export function censorSensitive(value: unknown): unknown {
   return censorNode(value, new WeakMap<object, unknown>());
+}
+
+/**
+ * Redacta el par `clave=valor` cuando la clave es sensible; en caso contrario
+ * devuelve el texto original intacto.
+ */
+function redactSensitiveAssignment(match: string, separator: string, fieldName: string): string {
+  return isSensitiveFieldName(fieldName) ? `${separator}${fieldName}=${LOG_CENSOR}` : match;
+}
+
+/**
+ * Redacta secretos embebidos en texto libre (`message`, `stack`).
+ *
+ * Cubre, en este orden: `Bearer <token>`, pares `clave=valor` con clave sensible
+ * y, por ultimo, la query string de subcadenas con forma de URL.
+ */
+function redactSecretsInText(text: string): string {
+  return text
+    .replace(BEARER_TOKEN_PATTERN, REDACTED_BEARER_TOKEN)
+    .replace(SENSITIVE_ASSIGNMENT_PATTERN, redactSensitiveAssignment)
+    .replace(URL_QUERY_STRING_PATTERN, '$1');
+}
+
+/**
+ * Representacion censurada de un error apta para logs.
+ *
+ * Decision de diseno: en lugar de extender `censorSensitive` (que devuelve el
+ * `Error` intacto para no perder el stack) se expone este helper explicito para
+ * el borde que registra excepciones. Conserva `name`, `message` y `stack` con
+ * formato de error (necesarios server-side) pero aplica la redaccion de secretos
+ * a nivel de string en `message`/`stack` y censura recursivamente las
+ * propiedades enumerables del error, incluidas las anidadas. Un valor que no sea
+ * `Error` se delega a `censorSensitive`.
+ */
+export function censorError(error: unknown): unknown {
+  if (!(error instanceof Error)) {
+    return censorSensitive(error);
+  }
+
+  const censoredError: Record<string, unknown> = {
+    name: error.name,
+    message: redactSecretsInText(error.message),
+    stack: redactSecretsInText(error.stack ?? ''),
+  };
+
+  const enumerableProperties = error as unknown as Record<string, unknown>;
+
+  for (const [fieldName, fieldValue] of Object.entries(enumerableProperties)) {
+    if (RESERVED_ERROR_FIELDS.has(fieldName)) {
+      continue;
+    }
+
+    censoredError[fieldName] = isSensitiveFieldName(fieldName)
+      ? LOG_CENSOR
+      : censorSensitive(fieldValue);
+  }
+
+  return censoredError;
 }
 
 function isCensorableArgument(value: unknown): boolean {

@@ -9,10 +9,14 @@ import type { ArgumentsHost } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import { describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import { AppModule } from '../../app.module';
+import { LOG_CENSOR } from '../../config/logger.config';
 import { ProblemDetailsFilter } from './problem-details.filter';
 import type { ProblemDetails } from './problem-details.filter';
+
+const LEAK_SENTINEL = 'super-secret-leak';
 
 interface FakeRequest {
   id?: string;
@@ -60,15 +64,17 @@ function createHost(request: FakeRequest): HostHarness {
   return { host, response };
 }
 
+type LogMethod = (payload: unknown, message?: string) => void;
+
 interface LoggerHarness {
   logger: Logger;
-  error: ReturnType<typeof vi.fn>;
-  warn: ReturnType<typeof vi.fn>;
+  error: Mock<LogMethod>;
+  warn: Mock<LogMethod>;
 }
 
 function createLogger(): LoggerHarness {
-  const error = vi.fn();
-  const warn = vi.fn();
+  const error = vi.fn<LogMethod>();
+  const warn = vi.fn<LogMethod>();
 
   return { logger: { error, warn } as unknown as Logger, error, warn };
 }
@@ -211,7 +217,23 @@ describe('ProblemDetailsFilter query sanitization', () => {
 });
 
 describe('ProblemDetailsFilter logging', () => {
-  it('logs 5xx failures at error level with the raw error server-side', () => {
+  interface LoggedError {
+    name: string;
+    message: string;
+    stack: string;
+  }
+
+  function readLoggedError(logger: LoggerHarness): LoggedError {
+    const payload = logger.error.mock.calls[0]?.[0] as { err: LoggedError };
+
+    return payload.err;
+  }
+
+  function stringifyLoggedPayload(logger: LoggerHarness): string {
+    return JSON.stringify(logger.error.mock.calls[0]?.[0]);
+  }
+
+  it('logs 5xx failures at error level with a censored error server-side', () => {
     const { filter, logger } = createFilter();
     const { host } = createHost({ originalUrl: '/orders', url: '/orders' });
 
@@ -219,6 +241,48 @@ describe('ProblemDetailsFilter logging', () => {
 
     expect(logger.error).toHaveBeenCalledOnce();
     expect(logger.warn).not.toHaveBeenCalled();
+
+    const loggedError = readLoggedError(logger);
+
+    expect(loggedError.name).toBe('InternalServerErrorException');
+    expect(loggedError.message).toBe('detalle interno filtrado');
+    expect(typeof loggedError.stack).toBe('string');
+  });
+
+  it('censures a leaked secret from the message and stack of a logged 5xx error', () => {
+    const { filter, logger } = createFilter();
+    const { host } = createHost({ id: 'req-1', originalUrl: '/orders', url: '/orders' });
+
+    const error = new Error(`fallo en /callback?token=${LEAK_SENTINEL}`);
+    error.stack = `Error: fallo en /callback?token=${LEAK_SENTINEL}\n    at handler`;
+
+    filter.catch(error, host);
+
+    const serialized = stringifyLoggedPayload(logger);
+    const loggedError = readLoggedError(logger);
+
+    expect(serialized).not.toContain(LEAK_SENTINEL);
+    expect(loggedError.message).not.toContain(LEAK_SENTINEL);
+    expect(loggedError.stack).not.toContain(LEAK_SENTINEL);
+    expect(loggedError.name).toBe('Error');
+  });
+
+  it('censures sensitive and nested enumerable properties of a logged error', () => {
+    const { filter, logger } = createFilter();
+    const { host } = createHost({ originalUrl: '/orders', url: '/orders' });
+
+    const error = new Error('boom');
+    Object.assign(error, {
+      authorization: `Bearer ${LEAK_SENTINEL}`,
+      payload: { cvv: LEAK_SENTINEL },
+    });
+
+    filter.catch(error, host);
+
+    const serialized = stringifyLoggedPayload(logger);
+
+    expect(serialized).not.toContain(LEAK_SENTINEL);
+    expect(serialized).toContain(LOG_CENSOR);
   });
 
   it('logs 4xx failures at warn level', () => {
