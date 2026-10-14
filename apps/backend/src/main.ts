@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
+import { reportBootstrapFailure } from './bootstrap-failure';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -15,4 +16,10 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
 }
 
-void bootstrap();
+bootstrap().catch((error: unknown) =>
+  reportBootstrapFailure(
+    error,
+    (m) => process.stderr.write(m),
+    (code) => process.exit(code),
+  ),
+);

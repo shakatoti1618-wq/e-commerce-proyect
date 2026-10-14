@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { validateEnv } from './env.schema';
+import { shouldIgnoreEnvFile, validateEnv } from './env.schema';
 
 const SECRET_SENTINEL = 'super-secret-leak';
 
@@ -26,7 +26,7 @@ describe('validateEnv', () => {
       PORT: '8080',
       LOG_LEVEL: 'warn',
       CORS_ORIGINS: 'https://lume.example',
-      ENABLE_SWAGGER: 'true',
+      ENABLE_SWAGGER: 'false',
     });
 
     expect(env.NODE_ENV).toBe('production');
@@ -34,7 +34,7 @@ describe('validateEnv', () => {
     expect(typeof env.PORT).toBe('number');
     expect(env.LOG_LEVEL).toBe('warn');
     expect(env.CORS_ORIGINS).toBe('https://lume.example');
-    expect(env.ENABLE_SWAGGER).toBe(true);
+    expect(env.ENABLE_SWAGGER).toBe(false);
   });
 
   it('applies defaults when only NODE_ENV is provided', () => {
@@ -105,6 +105,54 @@ describe('validateEnv', () => {
     expect(error.message).toContain('PORT');
     expect(error.message).toContain('ENABLE_SWAGGER');
     expect(error.message).not.toContain(SECRET_SENTINEL);
+  });
+
+  it('sets TRUST_PROXY_HOPS default to 0', () => {
+    const env = validateEnv({ NODE_ENV: 'test' });
+    expect(env.TRUST_PROXY_HOPS).toBe(0);
+  });
+
+  it('coerces TRUST_PROXY_HOPS string to number', () => {
+    const env = validateEnv({ NODE_ENV: 'test', TRUST_PROXY_HOPS: '3' });
+    expect(env.TRUST_PROXY_HOPS).toBe(3);
+    expect(typeof env.TRUST_PROXY_HOPS).toBe('number');
+  });
+
+  it('rejects negative TRUST_PROXY_HOPS and names variable without leaking value', () => {
+    const error = getThrownError(() => validateEnv({ NODE_ENV: 'test', TRUST_PROXY_HOPS: '-1' }));
+    expect(error.message).toContain('TRUST_PROXY_HOPS');
+    expect(error.message).not.toContain('-1');
+  });
+
+  it('rejects non-numeric TRUST_PROXY_HOPS and names variable without leaking value', () => {
+    const error = getThrownError(() => validateEnv({ NODE_ENV: 'test', TRUST_PROXY_HOPS: 'abc' }));
+    expect(error.message).toContain('TRUST_PROXY_HOPS');
+    expect(error.message).not.toContain('abc');
+  });
+
+  it('rejects ENABLE_SWAGGER true in production', () => {
+    const error = getThrownError(() =>
+      validateEnv({ NODE_ENV: 'production', ENABLE_SWAGGER: 'true' }),
+    );
+    expect(error.message).toContain('ENABLE_SWAGGER');
+    expect(error.message).not.toContain('true');
+  });
+
+  it('allows ENABLE_SWAGGER true in development', () => {
+    const env = validateEnv({ NODE_ENV: 'development', ENABLE_SWAGGER: 'true' });
+    expect(env.ENABLE_SWAGGER).toBe(true);
+  });
+
+  it('allows ENABLE_SWAGGER false in production', () => {
+    const env = validateEnv({ NODE_ENV: 'production', ENABLE_SWAGGER: 'false' });
+    expect(env.ENABLE_SWAGGER).toBe(false);
+  });
+
+  it('returns correct shouldIgnoreEnvFile behavior', () => {
+    expect(shouldIgnoreEnvFile('production')).toBe(true);
+    expect(shouldIgnoreEnvFile('development')).toBe(false);
+    expect(shouldIgnoreEnvFile('test')).toBe(false);
+    expect(shouldIgnoreEnvFile(undefined)).toBe(false);
   });
 });
 
