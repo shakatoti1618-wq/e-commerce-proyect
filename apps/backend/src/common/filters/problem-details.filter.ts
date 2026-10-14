@@ -2,7 +2,7 @@ import { STATUS_CODES } from 'node:http';
 
 import { Catch, HttpException } from '@nestjs/common';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
-import type { Logger } from 'nestjs-pino';
+import { Logger } from 'nestjs-pino';
 
 /**
  * Cuerpo de error segun RFC 9457 (`application/problem+json`).

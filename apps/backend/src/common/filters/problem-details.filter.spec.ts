@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import type { ArgumentsHost } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import type { Logger } from 'nestjs-pino';
+import { Logger } from 'nestjs-pino';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AppModule } from '../../app.module';
@@ -193,6 +193,15 @@ describe('ProblemDetailsFilter logging', () => {
 
     expect(logger.warn).toHaveBeenCalledOnce();
     expect(logger.error).not.toHaveBeenCalled();
+  });
+});
+
+describe('ProblemDetailsFilter DI metadata', () => {
+  it('declares the Logger value import as its first constructor dependency', () => {
+    const paramTypes = Reflect.getMetadata('design:paramtypes', ProblemDetailsFilter) as
+      unknown[] | undefined;
+
+    expect(paramTypes?.[0]).toBe(Logger);
   });
 });
 
