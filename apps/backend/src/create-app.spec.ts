@@ -7,6 +7,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createApp } from './create-app';
 
 const NOT_FOUND_PATH = '/api/nope';
+const SWAGGER_UI_PATH = '/api/docs';
 const LEAK_SENTINEL = 'XYZ';
 
 /**
@@ -48,6 +49,15 @@ describe('createApp', () => {
     expect(response.headers['content-type']).toContain('application/problem+json');
     expect(response.text).not.toContain(LEAK_SENTINEL);
     expect(JSON.stringify(response.body)).not.toContain(LEAK_SENTINEL);
+  });
+
+  it('does not expose the Swagger UI route when ENABLE_SWAGGER is not set', async () => {
+    const startedApp = await startApp();
+    await startedApp.init();
+
+    const response = await request(startedApp.getHttpServer()).get(SWAGGER_UI_PATH);
+
+    expect(response.status).toBe(404);
   });
 
   it('exposes the raw body buffer so signatures can be verified', async () => {

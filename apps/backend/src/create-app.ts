@@ -2,6 +2,7 @@ import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
@@ -209,6 +210,46 @@ function mapBodyParserError(
 }
 
 /**
+ * Ruta bajo el prefijo global `api` donde se sirve la UI de OpenAPI.
+ * Con `ENABLE_SWAGGER=true` la URL final es `/api/docs`; sin el flag, la ruta
+ * no se registra y responde 404 como cualquier otra ruta inexistente.
+ */
+const OPENAPI_UI_PATH = 'api/docs';
+
+/** Título del documento OpenAPI (placeholder; se ajuste al definir el API). */
+const OPENAPI_DOCUMENT_TITLE = 'Lumé API';
+
+/** Versión del documento OpenAPI (placeholder; sigue el versionado del API). */
+const OPENAPI_DOCUMENT_VERSION = '0.0.0';
+
+/** Descripción breve y neutra del documento OpenAPI. */
+const OPENAPI_DOCUMENT_DESCRIPTION = 'REST API del backend de Lumé.';
+
+/**
+ * Monta la UI y el schema OpenAPI en `api/docs` SOLO si `ENABLE_SWAGGER=true`.
+ *
+ * Sin el flag (falso o ausente) no se registra ninguna ruta: `GET /api/docs`
+ * responde 404. El schema de entorno ya rechaza `true` cuando `NODE_ENV` es
+ * `production`, así que aquí únicamente se comprueba el flag.
+ */
+function mountOpenApiDocumentation(app: NestExpressApplication, config: ConfigService): void {
+  if (config.get<boolean>('ENABLE_SWAGGER') !== true) {
+    return;
+  }
+
+  const document = SwaggerModule.createDocument(
+    app,
+    new DocumentBuilder()
+      .setTitle(OPENAPI_DOCUMENT_TITLE)
+      .setVersion(OPENAPI_DOCUMENT_VERSION)
+      .setDescription(OPENAPI_DOCUMENT_DESCRIPTION)
+      .build(),
+  );
+
+  SwaggerModule.setup(OPENAPI_UI_PATH, app, document);
+}
+
+/**
  * Construye la aplicación NestExpress SIN escuchar en ningún puerto.
  *
  * Se separa de `bootstrap()` (en `main.ts`) para que los tests puedan importar
@@ -248,6 +289,10 @@ export async function createApp(): Promise<NestExpressApplication> {
   // Normaliza los errores del body parser (413/400) a problem+json. Se registra
   // DESPUÉS del parser para que Express lo invoque al propagar el error.
   app.use(mapBodyParserError);
+
+  // OpenAPI SOLO con `ENABLE_SWAGGER=true` (nunca en producción, lo garantiza
+  // el schema de entorno).
+  mountOpenApiDocumentation(app, config);
 
   return app;
 }
