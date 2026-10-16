@@ -1,3 +1,4 @@
+import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -62,6 +63,42 @@ interface ResponseHeaderWriter {
 }
 
 /**
+ * Superficie mínima de un error de `body-parser` que necesitamos inspeccionar.
+ *
+ * `type` es la etiqueta propia de `body-parser` (`entity.too.large`,
+ * `entity.parse.failed`); `status`/`statusCode` son el código HTTP que adjunta.
+ * Se tipan como `unknown` porque el error llega como valor no confiable y se
+ * valida antes de usarlo (nunca se interpola en la respuesta).
+ */
+interface BodyParserErrorLike {
+  type?: unknown;
+  status?: unknown;
+  statusCode?: unknown;
+}
+
+/** Código HTTP con el que `body-parser` marca un cuerpo demasiado grande. */
+const PAYLOAD_TOO_LARGE_STATUS = 413;
+
+/** Etiqueta de `body-parser` para un cuerpo que excede el límite. */
+const BODY_PARSER_TOO_LARGE_TYPE = 'entity.too.large';
+
+/** Etiqueta de `body-parser` para un JSON que no se pudo parsear. */
+const BODY_PARSER_PARSE_FAILED_TYPE = 'entity.parse.failed';
+
+/**
+ * Mensajes GENÉRICOS y fijos para los errores del body parser.
+ *
+ * Se evita por completo interpolar el mensaje original del parser o cualquier
+ * fragmento del cuerpo enviado: un `detail` con contenido del request podría
+ * reflejar datos del cliente y romper la coherencia del API.
+ */
+const BODY_TOO_LARGE_DETAIL = 'Request body too large';
+const MALFORMED_JSON_DETAIL = 'Malformed JSON body';
+
+/** Firma de `next` de Express para reenviar el error (o el control). */
+type ErrorNextFunction = (error?: unknown) => void;
+
+/**
  * Normaliza la lista de orígenes permitidos (fail-closed).
  *
  * - Separa por coma, recorta espacios, pasa a minúsculas.
@@ -107,6 +144,71 @@ function applyBaselineSecurityHeaders(
 }
 
 /**
+ * Estrecha `unknown` a la superficie inspeccionable de un error de body-parser.
+ *
+ * Solo comprueba que sea un objeto no nulo; los campos concretos se leen a
+ * través de `BodyParserErrorLike` y se comparan sin asumir su tipo.
+ */
+function isBodyParserError(error: unknown): error is BodyParserErrorLike {
+  return typeof error === 'object' && error !== null;
+}
+
+/** ¿El error trae el código HTTP 413 en `status` o `statusCode`? */
+function hasPayloadTooLargeStatus(error: BodyParserErrorLike): boolean {
+  return error.status === PAYLOAD_TOO_LARGE_STATUS || error.statusCode === PAYLOAD_TOO_LARGE_STATUS;
+}
+
+/** ¿Es el error de `body-parser` por un cuerpo que excede el límite? */
+function isPayloadTooLargeError(error: unknown): boolean {
+  if (!isBodyParserError(error)) {
+    return false;
+  }
+
+  return error.type === BODY_PARSER_TOO_LARGE_TYPE || hasPayloadTooLargeStatus(error);
+}
+
+/** ¿Es el error de `body-parser` por un JSON mal formado? */
+function isMalformedJsonError(error: unknown): boolean {
+  if (error instanceof SyntaxError) {
+    return true;
+  }
+
+  return isBodyParserError(error) && error.type === BODY_PARSER_PARSE_FAILED_TYPE;
+}
+
+/**
+ * Middleware de error (4 parámetros, como exige Express) que normaliza los
+ * errores del body parser a `HttpException`.
+ *
+ * Nest mapea `SyntaxError`/`URIError` a `BadRequestException` reflejando el
+ * mensaje del parser, pero no reconoce `PayloadTooLargeError` (de ahí el 500).
+ * Al reenviarlos como `HttpException` con un mensaje fijo, el
+ * `ProblemDetailsFilter` global les da formato `application/problem+json` sin
+ * filtrar contenido del cuerpo. Cualquier otro error se reenvía intacto.
+ *
+ * Debe registrarse DESPUÉS del body parser para que Express lo alcance al
+ * propagar el error.
+ */
+function mapBodyParserError(
+  error: unknown,
+  _request: unknown,
+  _response: unknown,
+  next: ErrorNextFunction,
+): void {
+  if (isPayloadTooLargeError(error)) {
+    next(new PayloadTooLargeException(BODY_TOO_LARGE_DETAIL));
+    return;
+  }
+
+  if (isMalformedJsonError(error)) {
+    next(new BadRequestException(MALFORMED_JSON_DETAIL));
+    return;
+  }
+
+  next(error);
+}
+
+/**
  * Construye la aplicación NestExpress SIN escuchar en ningún puerto.
  *
  * Se separa de `bootstrap()` (en `main.ts`) para que los tests puedan importar
@@ -142,6 +244,10 @@ export async function createApp(): Promise<NestExpressApplication> {
 
   // Body parser global con límite conservador.
   app.useBodyParser('json', { limit: GLOBAL_BODY_LIMIT });
+
+  // Normaliza los errores del body parser (413/400) a problem+json. Se registra
+  // DESPUÉS del parser para que Express lo invoque al propagar el error.
+  app.use(mapBodyParserError);
 
   return app;
 }
