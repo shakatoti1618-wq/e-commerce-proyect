@@ -7,6 +7,7 @@ import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
 import { shouldIgnoreEnvFile, validateEnv } from './config/env.schema';
 import { buildPinoHttpOptions } from './config/logger.config';
 import { zodValidationPipe } from './common/dto/zod.dto';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { zodValidationPipe } from './common/dto/zod.dto';
       }),
     }),
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
     { provide: APP_PIPE, useClass: zodValidationPipe },
