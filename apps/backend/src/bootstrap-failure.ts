@@ -1,3 +1,32 @@
+const ERROR_CODE_PATTERN = /^[A-Za-z0-9_]+$/;
+const ERROR_CODE_MAX_LENGTH = 64;
+const STARTUP_FAILURE_MESSAGE_PREFIX = 'Bootstrap failed: unexpected error during startup';
+
+function readSafeErrorCode(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null) {
+    return undefined;
+  }
+  const candidate = (error as { code?: unknown }).code;
+  if (typeof candidate !== 'string') {
+    return undefined;
+  }
+  if (candidate.length > ERROR_CODE_MAX_LENGTH) {
+    return undefined;
+  }
+  if (!ERROR_CODE_PATTERN.test(candidate)) {
+    return undefined;
+  }
+  return candidate;
+}
+
+function describeUnexpectedStartupFailure(error: unknown): string {
+  const code = readSafeErrorCode(error);
+  if (code === undefined) {
+    return `${STARTUP_FAILURE_MESSAGE_PREFIX}.\n`;
+  }
+  return `${STARTUP_FAILURE_MESSAGE_PREFIX} (${code}).\n`;
+}
+
 export function reportBootstrapFailure(
   error: unknown,
   write: (message: string) => void,
@@ -39,7 +68,7 @@ export function reportBootstrapFailure(
       write('Invalid environment variables\n');
     }
   } else {
-    write('Bootstrap failed: unexpected error during startup.\n');
+    write(describeUnexpectedStartupFailure(error));
   }
 
   exit(1);
