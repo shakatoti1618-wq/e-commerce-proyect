@@ -12,8 +12,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "format:check": "prettier --check ."
+    "test": "vitest run"
   },
   "dependencies": {
     "@nestjs/common": "11.2.7",
