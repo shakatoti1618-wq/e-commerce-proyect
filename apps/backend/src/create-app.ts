@@ -25,6 +25,20 @@ import { AppModule } from './app.module';
 const GLOBAL_BODY_LIMIT = '1mb';
 
 /**
+ * Límite para el parser urlencoded (100 KB), igual al valor por defecto de
+ * `body-parser`.
+ *
+ * Se registra EXPLÍCITAMENTE antes de `mapBodyParserError` porque Nest
+ * registra su parser urlencoded por defecto en `init()`, DESPUÉS de nuestros
+ * middlewares: su error nunca alcanzaría el middleware de normalización y el
+ * cliente recibiría un 500 en lugar de un 413 problem+json.
+ *
+ * `extended: false` difiere del default de Nest (`extended: true`): hoy
+ * ninguna ruta consume urlencoded, así que no hay impacto.
+ */
+const URLENCODED_BODY_LIMIT = '100kb';
+
+/**
  * Cabeceras base aplicadas a TODA respuesta (éxito o error).
  *
  * Se registran con un middleware propio: sin `helmet` ni dependencias nuevas.
@@ -187,7 +201,12 @@ function isMalformedJsonError(error: unknown): boolean {
  * `ProblemDetailsFilter` global les da formato `application/problem+json` sin
  * filtrar contenido del cuerpo. Cualquier otro error se reenvía intacto.
  *
- * Debe registrarse DESPUÉS del body parser para que Express lo alcance al
+ * Normaliza los errores del body parser (413/400) a problem+json. Cubre los
+ * parsers json Y urlencoded, así que ambos deben registrarse ANTES de este
+ * middleware; si Nest registra el suyo en `init()` después, su error nunca
+ * pasaría por aquí y acabaría en un 500.
+ *
+ * Debe registrarse DESPUÉS de los parsers para que Express lo alcance al
  * propagar el error.
  */
 function mapBodyParserError(
@@ -286,8 +305,13 @@ export async function createApp(): Promise<NestExpressApplication> {
   // Body parser global con límite conservador.
   app.useBodyParser('json', { limit: GLOBAL_BODY_LIMIT });
 
-  // Normaliza los errores del body parser (413/400) a problem+json. Se registra
-  // DESPUÉS del parser para que Express lo invoque al propagar el error.
+  // Parser urlencoded registrado AQUÍ y no en `init()`, para que sus errores
+  // (413/400) pasen por `mapBodyParserError` en lugar de acabar en un 500.
+  app.useBodyParser('urlencoded', { extended: false, limit: URLENCODED_BODY_LIMIT });
+
+  // Normaliza los errores del body parser (413/400) a problem+json; cubre los
+  // parsers json y urlencoded. Se registra DESPUÉS de ambos para que Express
+  // lo invoque al propagar el error.
   app.use(mapBodyParserError);
 
   // OpenAPI SOLO con `ENABLE_SWAGGER=true` (nunca en producción, lo garantiza

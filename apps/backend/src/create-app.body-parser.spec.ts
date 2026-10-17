@@ -24,6 +24,15 @@ const OVERSIZED_JSON_BODY = JSON.stringify({ padding: 'a'.repeat(OVERSIZED_PAYLO
 const EXPECTED_TOO_LARGE_DETAIL = 'Request body too large';
 const EXPECTED_MALFORMED_DETAIL = 'Malformed JSON body';
 
+const URLENCODED_CONTENT_TYPE = 'application/x-www-form-urlencoded';
+
+/** Cuerpo urlencoded válido pero muy por encima del límite (100 KB). */
+const OVERSIZED_URLENCODED_PADDING = 'b'.repeat(200_000);
+const OVERSIZED_URLENCODED_BODY = `a=${OVERSIZED_URLENCODED_PADDING}`;
+
+/** Cuerpo urlencoded pequeño que el parser debe aceptar sin error. */
+const SMALL_URLENCODED_BODY = 'a=b';
+
 /** Vista mínima del cuerpo problem+json para inspeccionar `detail` sin `any`. */
 interface ProblemBody {
   detail?: unknown;
@@ -88,5 +97,32 @@ describe('createApp body-parser error handling', () => {
     expect(response.status).toBe(404);
     expect(response.headers['content-type']).toContain(PROBLEM_JSON_CONTENT_TYPE);
     expect(response.headers['x-content-type-options']).toBe(NOSNIFF_HEADER_VALUE);
+  });
+
+  it('responds 413 as application/problem+json for an oversized urlencoded body', async () => {
+    const startedApp = await startApp();
+    await startedApp.init();
+
+    const response = await request(startedApp.getHttpServer())
+      .post(NOT_FOUND_PATH)
+      .set('Content-Type', URLENCODED_CONTENT_TYPE)
+      .send(OVERSIZED_URLENCODED_BODY);
+
+    expect(response.status).toBe(413);
+    expect(response.headers['content-type']).toContain(PROBLEM_JSON_CONTENT_TYPE);
+    expect(response.headers['x-content-type-options']).toBe(NOSNIFF_HEADER_VALUE);
+    expect((response.body as ProblemBody).detail).toBe(EXPECTED_TOO_LARGE_DETAIL);
+  });
+
+  it('accepts a small urlencoded body without a body-parser error', async () => {
+    const startedApp = await startApp();
+    await startedApp.init();
+
+    const response = await request(startedApp.getHttpServer())
+      .post(NOT_FOUND_PATH)
+      .set('Content-Type', URLENCODED_CONTENT_TYPE)
+      .send(SMALL_URLENCODED_BODY);
+
+    expect(response.status).toBe(404);
   });
 });
