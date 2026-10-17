@@ -125,4 +125,27 @@ describe('createApp body-parser error handling', () => {
 
     expect(response.status).toBe(404);
   });
+
+  it('does not map a foreign SyntaxError to 400', async () => {
+    const startedApp = await startApp();
+
+    startedApp.use((_request: unknown, _response: unknown, next: (error?: unknown) => void) => {
+      next(new SyntaxError('boom'));
+    });
+
+    await startedApp.init();
+
+    const response = await request(startedApp.getHttpServer()).get(NOT_FOUND_PATH);
+
+    /**
+     * Nest convierte cualquier `SyntaxError` en `BadRequestException(err.message)`
+     * dentro de su `RoutesResolver`, por eso el status es 400 y no 500. Ese
+     * `err.message` se refleja en `detail`, así que la aserción relevante es que
+     * el `detail` NO sea el texto genérico 'Malformed JSON body' (que es lo que
+     * produciría nuestro `mapBodyParserError` si siguiera capturando cualquier
+     * `SyntaxError`).
+     */
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body)).not.toContain('Malformed JSON body');
+  });
 });

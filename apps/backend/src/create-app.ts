@@ -197,12 +197,13 @@ function isPayloadTooLargeError(error: unknown): boolean {
   return error.type === BODY_PARSER_TOO_LARGE_TYPE || hasPayloadTooLargeStatus(error);
 }
 
-/** ¿Es el error de `body-parser` por un JSON mal formado? */
+/**
+ * ¿Es el error de `body-parser` por un JSON mal formado?
+ *
+ * Reconoce únicamente el error propio de `body-parser` identificado por su
+ * etiqueta `entity.parse.failed`; NO cualquier `SyntaxError` genérico.
+ */
 function isMalformedJsonError(error: unknown): boolean {
-  if (error instanceof SyntaxError) {
-    return true;
-  }
-
   return isBodyParserError(error) && error.type === BODY_PARSER_PARSE_FAILED_TYPE;
 }
 
