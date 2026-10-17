@@ -69,4 +69,17 @@ describe('createApp CORS fail-closed', () => {
     expect(response.status).toBe(200);
     expect(response.headers['access-control-allow-origin']).toBeUndefined();
   });
+
+  it('omits allow-origin and allow-credentials when the allowlist is empty', async () => {
+    const startedApp = await startApp();
+    await startedApp.init();
+
+    const response = await request(startedApp.getHttpServer())
+      .get(HEALTH_PATH)
+      .set('Origin', ARBITRARY_ORIGIN);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+  });
 });

@@ -1,5 +1,7 @@
 import 'reflect-metadata';
 
+import type { Server } from 'node:http';
+
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -36,6 +38,13 @@ const SECRET_SENTINEL = 'XYZ';
 const E2E_SENTINEL = 'E2E_SENTINEL';
 const PAYLOAD_LARGE_SIZE_BYTES = 2 * 1024 * 1024; // > 1MB
 const LARGE_PAYLOAD_BUFFER = Buffer.alloc(PAYLOAD_LARGE_SIZE_BYTES, 'a');
+// Métodos que el preflight de CORS debe autorizar (lista blanca explícita).
+const CORS_ALLOWED_METHODS_VALUE = 'GET,HEAD,POST,PATCH,DELETE';
+const PREFLIGHT_REQUEST_METHOD = 'GET';
+const BASE_SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+} as const;
 
 let createApp: CreateAppFn;
 let app: NestExpressApplication | undefined;
@@ -52,6 +61,32 @@ async function startApp(): Promise<NestExpressApplication> {
   const createdApp = await createApp();
   app = createdApp;
   return createdApp;
+}
+
+/**
+ * Superficie mínima de supertest necesaria para el preflight de CORS.
+ *
+ * La declaración compartida (`src/types/supertest.d.ts`) solo describe `get` y
+ * `post`; supertest SÍ expone `options` en tiempo de ejecución, así que aquí se
+ * describe ese método (sin recurrir a `any`) en lugar de ampliar la declaración
+ * compartida.
+ */
+interface PreflightResponse {
+  status: number;
+  headers: Record<string, string | undefined>;
+}
+
+interface PreflightRequest extends PromiseLike<PreflightResponse> {
+  set(field: string, value: string): this;
+}
+
+interface SuperTestPreflightClient {
+  options(url: string): PreflightRequest;
+}
+
+function sendPreflight(server: Server, url: string): PreflightRequest {
+  const client = request(server) as unknown as SuperTestPreflightClient;
+  return client.options(url);
 }
 
 beforeAll(async () => {
@@ -187,5 +222,46 @@ describe('createApp end-to-end baseline', () => {
 
     expect(responseText).not.toContain(E2E_SENTINEL);
     expect(responseBodyString).not.toContain(E2E_SENTINEL);
+  });
+
+  it('responds 204 to a preflight with the allowed origin and base headers', async () => {
+    if (!app) {
+      throw new Error('App not initialized');
+    }
+    const server = app.getHttpServer();
+    const response = await sendPreflight(server, NOT_FOUND_PATH_API)
+      .set('Origin', ALLOWED_ORIGIN)
+      .set('Access-Control-Request-Method', PREFLIGHT_REQUEST_METHOD);
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(ALLOWED_ORIGIN);
+    expect(response.headers['x-content-type-options']).toBe(
+      BASE_SECURITY_HEADERS['x-content-type-options'],
+    );
+    expect(response.headers['referrer-policy']).toBe(BASE_SECURITY_HEADERS['referrer-policy']);
+  });
+
+  it('allows only the configured methods on a preflight', async () => {
+    if (!app) {
+      throw new Error('App not initialized');
+    }
+    const server = app.getHttpServer();
+    const response = await sendPreflight(server, NOT_FOUND_PATH_API)
+      .set('Origin', ALLOWED_ORIGIN)
+      .set('Access-Control-Request-Method', PREFLIGHT_REQUEST_METHOD);
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-methods']).toBe(CORS_ALLOWED_METHODS_VALUE);
+  });
+
+  it('allows credentials for a configured origin', async () => {
+    if (!app) {
+      throw new Error('App not initialized');
+    }
+    const server = app.getHttpServer();
+    const response = await request(server).get(HEALTH_PATH_API).set('Origin', ALLOWED_ORIGIN);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-credentials']).toBe('true');
   });
 });

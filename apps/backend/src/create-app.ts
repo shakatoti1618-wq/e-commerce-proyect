@@ -62,6 +62,21 @@ const CORS_ORIGIN_WILDCARD = '*';
 const CORS_ORIGIN_TRAILING_SLASHES = /\/+$/;
 
 /**
+ * Métodos HTTP autorizados en el preflight de CORS (lista blanca explícita).
+ *
+ * Sin esta lista, `cors` responde con sus 5 métodos por defecto (incluye
+ * `PUT`, que hoy ninguna ruta expone). Se amplía cuando un módulo lo necesite.
+ */
+const CORS_ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE'];
+
+/**
+ * Cabeceras de request autorizadas en el preflight de CORS (lista blanca
+ * explícita). `Authorization` y `PUT` NO se añaden hasta que un módulo real
+ * los necesite.
+ */
+const CORS_ALLOWED_HEADERS = ['Content-Type', 'Accept'];
+
+/**
  * Superficie mínima del `app` de Express que necesitamos, para no depender de
  * `any` suelto ni de `@types/express`. `getHttpAdapter().getInstance()`
  * devuelve `any`; se castea a esta interfaz en el borde.
@@ -293,14 +308,24 @@ export async function createApp(): Promise<NestExpressApplication> {
   // No revelar la tecnología del servidor.
   expressInstance.disable('x-powered-by');
 
-  // CORS estricto: SIEMPRE un array normalizado (nunca `'*'`), con credenciales.
-  app.enableCors({
-    origin: normalizeCorsOrigins(config.get<string>('CORS_ORIGINS')),
-    credentials: true,
-  });
-
-  // Cabeceras base en toda respuesta, incluidos los errores.
+  // Cabeceras base en toda respuesta, incluidos los errores. Deben ir ANTES de
+  // `enableCors`: el middleware de preflight de CORS responde y corta la cadena,
+  // así que si se registra después el 204 del OPTIONS no llevaría
+  // `X-Content-Type-Options` ni `Referrer-Policy`.
   app.use(applyBaselineSecurityHeaders);
+
+  // CORS estricto: SIEMPRE un array normalizado (nunca `'*'`). La lista se
+  // calcula UNA sola vez y `credentials` solo se activa si queda algún origen
+  // permitido (fail-closed: con la allowlist vacía no se manda
+  // `Access-Control-Allow-Credentials`).
+  const allowedOrigins = normalizeCorsOrigins(config.get<string>('CORS_ORIGINS'));
+
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: CORS_ALLOWED_METHODS,
+    allowedHeaders: CORS_ALLOWED_HEADERS,
+    credentials: allowedOrigins.length > 0,
+  });
 
   // Body parser global con límite conservador.
   app.useBodyParser('json', { limit: GLOBAL_BODY_LIMIT });
