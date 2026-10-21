@@ -7,11 +7,11 @@ Línea de tiempo del proyecto: un registro corto por cada módulo cerrado y por 
 | 2026-09-30 | Corrección de configuración previa al M0 | Se agrega el agente `@devops` (monorepo, tooling, commits y CI), se crea el `.gitignore` de la raíz y se ajustan los permisos de los agentes. |
 | 2026-10-01 | M0 — Análisis y setup inicial | Monorepo con pnpm workspaces, pnpm 12.8.1 fijado, Node 24 LTS, TypeScript estricto, ESLint + Prettier (decidido sobre Biome con pruebas ejecutadas), CI con build bloqueante y commitlint solo en CI, y un único `.env.example` en la raíz. Decisiones en ADR-001 a ADR-004. |
 | 2026-10-08 | M2 — Frontend base (Next.js) | Módulo cerrado el 2026-10-08 con 23 commits de implementación y configuración (más los commits `docs:` de esta documentación de cierre), del 2026-10-02 al 2026-10-08; tema único burdeos/negro/dorado sin dark mode; identidad de marca por cliente de Settings con fixture local y fallback a `/api/settings`; 4 rutas públicas placeholder (`/`, `/productos`, `/nosotros`, `/contacto`) accesibles; ESLint 9 temporal solo en `apps/frontend` (raíz en ESLint 10); auditoría de seguridad sin críticos ni altos y 4 fixes posteriores. Detalle en ADR-005. |
-| 2026-10-20 | M3 — Backend base (NestJS) | Módulo implementado y documentado con 28 commits sobre main al momento de redactar esta fila (27 de implementación más el de ADR-006; la cifra definitiva se mide al abrir el PR); el cierre formal es el merge del PR, pendiente. NestJS 11 + Zod, errores `problem+json`, logging con censura, `/api/health`, CORS estricto fail-closed, cabeceras base, esqueleto OpenAPI solo con `ENABLE_SWAGGER=true`, 102 tests en 14 archivos. Cuatro fixes no pedidos tras prueba real y una auditoría de seguridad sin críticos ni altos (la primera se descartó como evidencia por citas fabricadas). Detalle en ADR-006. |
+| 2026-10-20 | M3 — Backend base (NestJS) | Módulo implementado y documentado con 29 commits en el PR #4 (28 antes del commit de bitácora); cerrado el 2026-10-20 con el merge del PR #4 (c490cb2). NestJS 11 + Zod, errores `problem+json`, logging con censura, `/api/health`, CORS estricto fail-closed, cabeceras base, esqueleto OpenAPI solo con `ENABLE_SWAGGER=true`, 102 tests en 14 archivos. Cuatro fixes no pedidos tras prueba real y una auditoría de seguridad sin críticos ni altos (la primera se descartó como evidencia por citas fabricadas). Detalle en ADR-006. |
 
 ## Diferidos de M3
 
-Estos puntos quedaron abiertos al implementar M3 (detalle y evidencia en ADR-006):
+Estos puntos quedaron abiertos al cerrar M3 (detalle y evidencia en ADR-006):
 
 - M4: 413/400 de body-parser y preflight sin `requestId`, sin `X-Request-Id` y sin log.
 - M4: `envFilePath` puede apuntar fuera del repo; cerrar **antes** de añadir `DATABASE_URL`.
